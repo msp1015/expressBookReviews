@@ -3,7 +3,7 @@ let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
-
+const axios = require('axios');
 
 // Register a new user
 public_users.post("/register", (req, res) => {
@@ -40,50 +40,75 @@ const doesExist = (username) => {
 }
 
 
-// Get the book list available in the shop
-public_users.get('/',function (req, res) {
-  //Write your code here
-  const booksList = JSON.stringify(books, null, 2); // Convierte el objeto a una cadena JSON formateada
-  res.status(200).send(booksList);
+// Simula una operación asíncrona con promesas
+const getBooksAsync = () => {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(books), 100);  // Simula un retraso
+  });
+};
+
+// Task 10: Obtener lista de libros usando async/await
+public_users.get('/', async (req, res) => {
+  try {
+    const booksList = await getBooksAsync();  // Llama a la función asíncrona simulada
+    res.status(200).json(booksList);  // Devuelve la lista de libros
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener la lista de libros", error: error.message });
+  }
 });
 
-// Get book details based on ISBN
-public_users.get('/isbn/:isbn', function (req, res) {
-  const isbn = req.params.isbn;  // Obtiene el ISBN desde la URL
-  const book = books[isbn];      // Busca el libro por ISBN
+// Task 11: Obtener detalles de un libro por ISBN usando async/await
+public_users.get('/isbn/:isbn', async (req, res) => {
+  const isbn = req.params.isbn;
+  try {
+    const booksList = await getBooksAsync();  // Llama a la función asíncrona
+    const book = booksList[isbn];  // Busca el libro por ISBN
 
-  if (book) {
-    res.status(200).json(book);  // Envía los detalles del libro si existe
-  } else {
-    res.status(404).json({ message: "Libro no encontrado con ese ISBN." });
+    if (book) {
+      res.status(200).json(book);
+    } else {
+      res.status(404).json({ message: "Libro no encontrado con ese ISBN." });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener detalles del libro", error: error.message });
   }
 });
   
-// Get book details based on author
-public_users.get('/author/:author', function (req, res) {
-  const author = req.params.author.toLowerCase();  // Convierte a minúsculas para evitar errores de coincidencia
-  const matchingBooks = Object.values(books).filter(
-    book => book.author.toLowerCase() === author
-  );
+// Task 12: Obtener detalles de libros por autor usando async/await
+public_users.get('/author/:author', async (req, res) => {
+  const authorParam = req.params.author.toLowerCase();
+  try {
+    const booksList = await getBooksAsync();  // Obtiene la lista asíncronamente
+    const matchingBooks = Object.values(booksList).filter(
+      book => book.author.toLowerCase() === authorParam
+    );
 
-  if (matchingBooks.length > 0) {
-    res.status(200).json(matchingBooks);  // Envía los libros encontrados
-  } else {
-    res.status(404).json({ message: "No se encontraron libros de este autor." });
+    if (matchingBooks.length > 0) {
+      res.status(200).json(matchingBooks);
+    } else {
+      res.status(404).json({ message: "No se encontraron libros de este autor." });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener libros por autor", error: error.message });
   }
 });
 
-// Get all books based on title
-public_users.get('/title/:title', function (req, res) {
-  const titleParam = req.params.title.toLowerCase();  // Convierte el título a minúsculas para coincidencias insensibles a mayúsculas
-  const matchingBooks = Object.values(books).filter(
-    book => book.title.toLowerCase().includes(titleParam)  // Filtra los libros que contengan el título
-  );
+// Task 13: Obtener detalles de libros por título usando async/await
+public_users.get('/title/:title', async (req, res) => {
+  const titleParam = req.params.title.toLowerCase();
+  try {
+    const booksList = await getBooksAsync();  // Obtiene la lista asíncronamente
+    const matchingBooks = Object.values(booksList).filter(
+      book => book.title.toLowerCase().includes(titleParam)
+    );
 
-  if (matchingBooks.length > 0) {
-    res.status(200).json(matchingBooks);  // Devuelve los libros coincidentes
-  } else {
-    res.status(404).json({ message: "No se encontraron libros con ese título." });
+    if (matchingBooks.length > 0) {
+      res.status(200).json(matchingBooks);
+    } else {
+      res.status(404).json({ message: "No se encontraron libros con ese título." });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener libros por título", error: error.message });
   }
 });
 
